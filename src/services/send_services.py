@@ -47,22 +47,12 @@ class SmtpEmailService(IEmailService):
                )
 
 class O365EmailService(IEmailService):
-    def send_email(request: EmailRequestO365) -> None:
-            #configurando cuerpo del correo
-            subject= request.subject
-            body_html= request.body
-            to=request.to
-            cc=request.cc
-            bcc=request.bcc
-            adjuntos=request.adjuntos
-            imagenes_embed=request.imagenes_embed
-
+    def send_email(request: EmailRequestO365) -> None:           
             #configurando varialbles de entorno
             tenant = settings.O365_TENANT_ID
             client_id = settings.O365_CLIENT_ID
             client_secret = settings.O365_CLIENT_SECRET
             username = settings.O365_USERNAME
-
 
             credentials = (client_id, client_secret)
             account = Account(credentials, auth_flow_type='credentials', tenant_id=tenant)
@@ -70,23 +60,23 @@ class O365EmailService(IEmailService):
             if id_verificated:
                 mailbox = account.mailbox(username)
                 message = mailbox.new_message()
-                message.to.add(to)
-                if cc:
-                    message.cc.add(cc if isinstance(cc, list) else [cc])
-                if bcc:
-                    message.bcc.add(bcc if isinstance(bcc, list) else [bcc])
-                message.subject = subject
-                message.body = body_html
+                message.to.add(request.to)
+                if request.cc:
+                    message.cc.add(request.cc if isinstance(request.cc, list) else [request.cc])
+                if request.bcc:
+                    message.bcc.add(request.bcc if isinstance(request.bcc, list) else [request.bcc])
+                message.subject = request.subject
+                message.body = request.body
                 message.body_type =  "html"
 
                 # Adjuntos
-                if adjuntos:
-                    for adj in adjuntos:
+                if request.adjuntos:
+                    for adj in request.adjuntos:
                         message.attachments.add(Path(adj))
 
                 # Imágenes embebidas
-                if imagenes_embed:
-                    for cid, img_path in imagenes_embed.items():
+                if request.imagenes_embed:
+                    for cid, img_path in request.imagenes_embed.items():
                         message.attachments.add(Path(img_path), is_inline=True, cid=cid)
 
                 message.send()

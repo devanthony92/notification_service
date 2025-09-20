@@ -30,9 +30,12 @@ Servicio backend para el envío de notificaciones por correo electrónico utiliz
 │ │ └── smtp_model.py
 │ ├── routes/
 │ │ └── send_routes.py  
-│ ├── services/
-│ │ └── send_services.py
+│ └── services/
+│ └── send_services.py
 ├── tests/
+│ ├── test_smtp.py
+│ ├── test_o365.py
+│ └── test_routes.py
 ├── main.py
 ├── requirements.txt
 ├── .env
