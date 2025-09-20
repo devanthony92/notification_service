@@ -3,8 +3,8 @@
 
 # dependencias y paqueterias utilizadas en el desarrollo del modulo de notificaciones
 from fastapi import APIRouter, BackgroundTasks
-from src.services.send_services import SmtpEmailService
-from src.models.smtp_model import EmailRequest
+from src.services.send_services import SmtpEmailService,o365EmailService
+from src.models.smtp_model import EmailRequest, EmailRequestO365
 from fastapi.responses import JSONResponse
 
 # inicializacion del roter 
@@ -16,7 +16,7 @@ sendemail_routes = APIRouter()
 # que el correo se envíe completamente.
 
 @sendemail_routes.post("/sendSMTP")
-async def send_email(req: EmailRequest, background_tasks: BackgroundTasks):
+async def send_email_smtp(req: EmailRequest, background_tasks: BackgroundTasks):
     background_tasks.add_task(SmtpEmailService.send,req)
     
     # Retorna confirmación inmediata al cliente sobre el envio del correo
@@ -30,3 +30,17 @@ async def send_email(req: EmailRequest, background_tasks: BackgroundTasks):
         status_code=202, # Codigo http 202 = Accepted (procesamiento en curso)
         
     )
+
+@sendemail_routes.post("/sendO365")
+async def send_email_o365(background_task: BackgroundTasks, request: EmailRequestO365):
+        background_task.add_task(o365EmailService.enviar_correo,request)
+        
+        # Retorna confirmación inmediata al cliente sobre el envio del correo
+        return JSONResponse(
+            content={
+                "status": "success",
+                "message": "Email sending in process",
+                "destinatary" : request.to,
+            },
+            status_code=202, # Codigo http 202 = Accepted (procesamiento en curso)       
+        )

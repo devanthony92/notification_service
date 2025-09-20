@@ -18,5 +18,7 @@ class Settings:
     # O365
     O365_CLIENT_ID: str = os.getenv("O365_CLIENT_ID")
     O365_CLIENT_SECRET: str = os.getenv("O365_CLIENT_SECRET")
+    O365_TENANT_ID: str = os.getenv("O365_TENANT_ID")
+    O365_USERNAME: str = os.getenv("O365_USERNAME")
 
 settings = Settings()
