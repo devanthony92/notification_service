@@ -4,6 +4,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# O365 credentials
+o365_token.txt
+*token.txt
+
 # Distribution / packaging
 .Python
 build/

@@ -3,7 +3,7 @@
 
 # dependencias y paqueterias utilizadas en el desarrollo del modulo de notificaciones
 from fastapi import APIRouter, BackgroundTasks
-from src.services.send_services import SmtpEmailService,o365EmailService
+from src.services.send_services import SmtpEmailService,O365EmailService
 from src.models.smtp_model import EmailRequest, EmailRequestO365
 from fastapi.responses import JSONResponse
 
@@ -33,7 +33,7 @@ async def send_email_smtp(req: EmailRequest, background_tasks: BackgroundTasks):
 
 @sendemail_routes.post("/sendO365")
 async def send_email_o365(background_task: BackgroundTasks, request: EmailRequestO365):
-        background_task.add_task(o365EmailService.enviar_correo,request)
+        background_task.add_task(O365EmailService.send_email,request)
         
         # Retorna confirmación inmediata al cliente sobre el envio del correo
         return JSONResponse(
