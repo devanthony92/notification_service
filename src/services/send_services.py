@@ -1,10 +1,9 @@
-import httpx
 from src.models.smtp_model import EmailRequest,EmailRequestO365
 from src.interfaces.email_service import IEmailService
 from src.config.config import settings
 from fastapi.responses import JSONResponse
 from email.message import EmailMessage
-import aiosmtplib
+import aiosmtplib, asyncio
 from O365 import Account
 from pathlib import Path
 
@@ -34,7 +33,7 @@ class SmtpEmailService(IEmailService):
                     status_code=200,
                     )
             
-        except httpx.HTTPStatusError as e:
+        except aiosmtplib.errors as e:
                #manejo de error del envio
                return JSONResponse(
                  content={
@@ -47,7 +46,7 @@ class SmtpEmailService(IEmailService):
                )
 
 class O365EmailService(IEmailService):
-    def send_email(request: EmailRequestO365) -> None:           
+    async def send_email(request: EmailRequestO365) -> None:           
             #configurando varialbles de entorno
             tenant = settings.O365_TENANT_ID
             client_id = settings.O365_CLIENT_ID
@@ -56,7 +55,7 @@ class O365EmailService(IEmailService):
 
             credentials = (client_id, client_secret)
             account = Account(credentials, auth_flow_type='credentials', tenant_id=tenant)
-            id_verificated = account.authenticate()
+            id_verificated =  await asyncio.to_thread(account.authenticate)
             if id_verificated:
                 mailbox = account.mailbox(username)
                 message = mailbox.new_message()
@@ -79,7 +78,7 @@ class O365EmailService(IEmailService):
                     for cid, img_path in request.imagenes_embed.items():
                         message.attachments.add(Path(img_path), is_inline=True, cid=cid)
 
-                message.send()
+                await asyncio.to_thread(message.send)
             else:
                 print("Error de autenticación")
 

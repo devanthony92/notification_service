@@ -11,7 +11,7 @@ class EmailRequestO365(BaseModel):
     subject: str
     body: str
     to: EmailStr
-    cc: Optional[str] = None        #con copia al email
-    bcc: Optional[str] = None       #con copia oculta al email
+    cc: Optional[EmailStr] = None        #con copia al email
+    bcc: Optional[EmailStr] = None       #con copia oculta al email
     adjuntos: Optional[List[str]] = None  # rutas locales de los archivos
     imagenes_embed: Optional[List[str]] = None  # rutas locales de imagenes embebidas
