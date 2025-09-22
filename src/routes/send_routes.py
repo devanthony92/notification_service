@@ -2,10 +2,11 @@
 # exponemos el endpoint para enviar correos de forma asíncrona
 
 # dependencias y paqueterias utilizadas en el desarrollo del modulo de notificaciones
-from fastapi import APIRouter, BackgroundTasks
-from src.services.send_services import SmtpEmailService,O365EmailService
+from fastapi import APIRouter, HTTPException, Depends
 from src.models.smtp_model import EmailRequest, EmailRequestO365
-from fastapi.responses import JSONResponse
+from src.services.send_services import SmtpEmailService,O365EmailService
+from sqlalchemy.orm import Session
+from src.config.config  import get_session
 
 # inicializacion del roter 
 sendemail_routes = APIRouter()
@@ -16,31 +17,20 @@ sendemail_routes = APIRouter()
 # que el correo se envíe completamente.
 
 @sendemail_routes.post("/sendSMTP")
-async def send_email_smtp(req: EmailRequest, background_tasks: BackgroundTasks):
-    background_tasks.add_task(SmtpEmailService.send,req)
-    
-    # Retorna confirmación inmediata al cliente sobre el envio del correo
-    return JSONResponse(
-        content={
-            "status": "success",
-            "message": "Email sending in process",
-            "to": req.to,
-            "subject": req.subject,
-        },
-        status_code=202, # Codigo http 202 = Accepted (procesamiento en curso)
-        
-    )
+async def send_email_smtp(request: EmailRequest, db: Session = Depends(get_session)):
+    # Endpoint para enviar un correo usando SMTP.
+    try:
+        result = await SmtpEmailService(db).send(request)
+        return {"message": "Correo enviado correctamente", "detail": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error enviando correo: {str(e)}")
 
 @sendemail_routes.post("/sendO365")
-async def send_email_o365(background_task: BackgroundTasks, request: EmailRequestO365):
-        background_task.add_task(O365EmailService.send_email,request)
-        
-        # Retorna confirmación inmediata al cliente sobre el envio del correo
-        return JSONResponse(
-            content={
-                "status": "success",
-                "message": "Email sending in process",
-                "destinatary" : request.to,
-            },
-            status_code=202, # Codigo http 202 = Accepted (procesamiento en curso)       
-        )
+async def send_email_o365(request: EmailRequestO365, db: Session = Depends(get_session)):
+    # Endpoint para enviar un correo usando O365.
+    try:
+        result = await O365EmailService(db).send(request)
+        return {"message": "Correo enviado correctamente", "detail": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
