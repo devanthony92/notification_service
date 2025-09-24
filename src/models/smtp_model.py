@@ -30,7 +30,7 @@ class EmailRequest(BaseModel):
             "example": {
                 "subject": "Testing Email",
                 "body": "<h1 style='font-size: 40px; color: crimson; text-align: center;'>❤️¡Hola!❤️</h1><p>Este es un correo de prueba con imagen embedida: <img src='cid:logo123'></p>",
-                "to": "aenriquemartinez@gmail.com",
+                "to": "user@example.com",
                 "identifying_name": "template1",
                 "cc": ["user@example.com"],
                 "bcc": ["user@example.com"],
