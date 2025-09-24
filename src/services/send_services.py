@@ -1,7 +1,7 @@
 
-from src.interfaces.email_service import IEmailService
 from src.config.config import settings
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse 
+from fastapi import HTTPException
 from email.message import EmailMessage
 import aiosmtplib, asyncio
 from O365 import Account
@@ -21,12 +21,17 @@ class SmtpEmailService:
          self.password = settings.SMTP_PASS
 
     async def send(self, req: EmailRequest) -> dict:
+        try:
+            dataplantilla = self.db.query(Plantillas).filter(Plantillas.identifying_name == req.identifying_name).first()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Fallo la consulta a la base de datos", error = e)
         message = EmailMessage()
         message["From"] = self.user
         message["To"] = req.to
         message["Subject"] = req.subject
-        message.set_content(req.body)
-        message.add_alternative(req.body, subtype="html")
+        message_body = dataplantilla.content_html if dataplantilla else req.body
+        message.set_content(message_body)
+        message.add_alternative(message_body, subtype="html")
 
         try:
             await   aiosmtplib.send(
@@ -75,25 +80,28 @@ class O365EmailService:
         )
         self._autenticate()
 
-    # Autenticación obligatoria (bloqueante, la envolvemos en hilo)
+    # Autenticación obligatoria
     def _autenticate(self):    
         if not self.account.is_authenticated:
              if not self.account.authenticate():
                   raise Exception("Error de autenticación con O365")
 
     async def send_email(self, request: EmailRequest) -> dict:           
-
+            try:
                 mailbox = self.account.mailbox(self.username)
                 message = mailbox.new_message()
-
-                
+                try:
+                    dataplantilla = self.db.query(Plantillas).filter(Plantillas.identifying_name == request.identifying_name).first()
+                except Exception as e:
+                    raise HTTPException(status_code=500, detail="Fallo la consulta a la base de datos", error = e)
                 message.to.add(request.to)
                 if request.cc:
                     message.cc.add(request.cc if isinstance(request.cc, list) else [request.cc])
                 if request.bcc:
                     message.bcc.add(request.bcc if isinstance(request.bcc, list) else [request.bcc])
                 message.subject = request.subject
-                message.body = request.body
+                #message.body = request.body
+                message.body = dataplantilla.content_html if dataplantilla else request.body
                 message.body_type =  "html" 
 
                 # Adjuntos
@@ -107,6 +115,15 @@ class O365EmailService:
                         message.attachments.add(Path(img_path), is_inline=True, cid=cid)
 
                 await asyncio.to_thread(message.send)
+            except Exception as e:
+                return JSONResponse(
+                    content={
+                        "status": str(e),
+                        "message": "No se pudo realizar el envio del Email",
+                        "data": request,
+                    },
+                    status_code=500,
+                )
 
 
 
